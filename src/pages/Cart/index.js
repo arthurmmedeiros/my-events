@@ -1,8 +1,24 @@
 import React from 'react';
-import { MdRemoveCircleOutline, MdAddCircleOutline, MdDelete } from 'react-icons/md'
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import {
+    MdRemoveCircleOutline,
+    MdAddCircleOutline,
+    MdDelete,
+} from 'react-icons/md';
 import { Container, ProductTable, Total } from './styles';
+import * as CartActions from '../../store/modules/cart/actions';
+import { formatPrice } from '../../util/format';
 
-export default function Cart() {
+function Cart({ cart, removeFromCart, updateAmount, total }) {
+    function increment(product) {
+        updateAmount(product.id, product.amount + 1);
+    }
+
+    function decrement(product) {
+        updateAmount(product.id, product.amount - 1);
+    }
+
     return (
         <Container>
             <ProductTable>
@@ -16,36 +32,59 @@ export default function Cart() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>
-                            <img src="data:image/jpeg;base64,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" alt="cruzeiro" />
-                        </td>
-                        <td>
-                            <strong>Cruzeirão cabuloso</strong>
-                            <span>R$212121</span>
-                        </td>
-                        <td>
-                            <div>
+                    {cart.map(product => (
+                        <tr>
+                            <td>
+                                <img src={product.image} alt={product.title} />
+                            </td>
+                            <td>
+                                <strong>{product.title}</strong>
+                                <span>{product.priceFormatted}</span>
+                            </td>
+                            <td>
+                                <div>
+                                    <button
+                                        type="button"
+                                        onClick={() => decrement(product)}
+                                    >
+                                        <MdRemoveCircleOutline
+                                            size={20}
+                                            color="#7159c1"
+                                        />
+                                    </button>
+                                    <input
+                                        type="number"
+                                        readOnlye
+                                        value={product.amount}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => increment(product)}
+                                    >
+                                        <MdAddCircleOutline
+                                            size={20}
+                                            color="#7159c1"
+                                        />
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <strong>{product.subtotal}</strong>
+                            </td>
+                            <td>
                                 <button type="button">
-                                    <MdRemoveCircleOutline size={20} color="#7159c1" />
+                                    <MdDelete
+                                        size={20}
+                                        color="#7159c1"
+                                        onClick={() =>
+                                            removeFromCart(product.id)
+                                        }
+                                    />
                                 </button>
-                                <input type="number" readOnlye value={2} />
-                                <button type="button">
-                                    <MdAddCircleOutline size={20} color="#7159c1" />
-                                </button>
-                            </div>
-                        </td>
-                        <td>
-                            <strong>R$5252525</strong>
-                        </td>
-                        <td>
-                            <button type="button">
-                                <MdDelete size={20} color="#7159c1" />
-                            </button>
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
-
             </ProductTable>
 
             <footer>
@@ -53,9 +92,26 @@ export default function Cart() {
 
                 <Total>
                     <span>Total</span>
-                    <strong>R$12222</strong>
+                    <strong>{total}</strong>
                 </Total>
             </footer>
         </Container>
     );
 }
+
+const mapStateToProps = state => ({
+    cart: state.cart.map(product => ({
+        ...product,
+        subtotal: formatPrice(product.price * product.amount),
+    })),
+    total: formatPrice(
+        state.cart.reduce((total, product) => {
+            return total + product.price * product.amount;
+        }, 0)
+    ),
+});
+
+const mapDispatchToProps = dispatch =>
+    bindActionCreators(CartActions, dispatch);
+
+export default connect(mapStateToProps, mapDispatchToProps)(Cart);
