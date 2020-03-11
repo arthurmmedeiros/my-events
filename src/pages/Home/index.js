@@ -1,74 +1,63 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import api from '../../services/api';
 import { ProductList } from './styles';
 import { MdAddShoppingCart } from 'react-icons/md';
-import  { formatPrice } from '../../util/format';
+import { formatPrice } from '../../util/format';
 import * as CartActions from '../../store/modules/cart/actions';
 
-class Home extends Component {
-    state = {
-        products: [],
-    };
-
-    async componentDidMount() {
-        const response = await api.get('products');
-
-        const data = response.data.map(product => ({
-            ...product,
-            priceFormatted: formatPrice(product.price)
-        }));
-
-        this.setState({ products: data });
-    }
-
-    handleAddProduct = id => {
-        const { addToCartRequest } = this.props;
-
-        addToCartRequest(id);
-    };
-
-    render() {
-        const { products } = this.state;
-        const { amount } = this.props;
-        console.log(amount);
-        return (
-            <ProductList>
-                {
-                    products.map(product => (
-                        <li key={product.id}>
-                            <img
-                                src={product.image}
-                                alt={product.title} />
-                            <strong>{product.title}</strong>
-                            <span>{product.priceFormatted}</span>
-
-                            <button type="button" onClick={() => this.handleAddProduct(product.id)}>
-                                <div>
-                                    <MdAddShoppingCart size={16} color="#FFF" />
-                                    {amount[product.id] || 0}
-                            </div>
-                                <span>Adicionar ao carrinho</span>
-                            </button>
-                        </li>
-                    ))
-                }
-            </ProductList>
-        );
-    }
-
-}
-
-const mapStateToProps = state => ({
-    amount: state.cart.reduce((amount, product) => {
-        amount[product.id] = product.amount;
+export default function Home() {
+    const [products, setProducts] = useState([]);
+    const amount = useSelector(state =>
+        state.cart.reduce((amount, product) => {
+            amount[product.id] = product.amount;
 
         return amount;
-    }, {}),
-});
+    }, {}), )
 
-const mapDispatchToProps = dispatch =>
-    bindActionCreators(CartActions, dispatch);
+    const dispatch = useDispatch();
 
-export default connect(mapStateToProps, mapDispatchToProps)(Home);
+    useEffect(() => {
+        async function loadProductcs() {
+            const response = await api.get('products');
+
+            const data = response.data.map(product => ({
+                ...product,
+                priceFormatted: formatPrice(product.price)
+            }));
+
+            setProducts(data);
+        }
+        loadProductcs();
+    }, []);
+
+    function handleAddProduct(id){
+        dispatch(CartActions.addToCartRequest(id));
+    };
+
+    return (
+        <ProductList>
+            {
+                products.map(product => (
+                    <li key={product.id}>
+                        <img
+                            src={product.image}
+                            alt={product.title} />
+                        <strong>{product.title}</strong>
+                        <span>{product.priceFormatted}</span>
+
+                        <button type="button" onClick={() => handleAddProduct(product.id)}>
+                            <div>
+                                <MdAddShoppingCart size={16} color="#FFF" />
+                                {amount[product.id] || 0}
+                            </div>
+                            <span>Adicionar ao carrinho</span>
+                        </button>
+                    </li>
+                ))
+            }
+        </ProductList>
+    );
+
+
+}
