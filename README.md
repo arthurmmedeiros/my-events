@@ -6,6 +6,10 @@ Run to install dependencies: `yarn`
 
 Run to start the app: `yarn start`
 
+Run to start the fake API server: `json-server server.sjon -p 3333`
+
+
+
 
 
 
